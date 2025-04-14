@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Page Configuration
 st.set_page_config(page_title="Salary Comparison App", layout="wide")
 
+# Green and White Theme Styling
 st.markdown("""
     <style>
     .stApp {
@@ -12,16 +14,18 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Title
 st.title("💼 Salary Comparison App")
 st.markdown("📅 Compare your salary across **2025, 2026, and 2027** with CPI and detailed breakdown.")
 
-# Sidebar Inputs
-st.sidebar.header("🔧 Inputs")
+# --- Sidebar Inputs ---
+st.sidebar.header("🔧 Salary Input Settings")
 
 base_pay = st.sidebar.number_input("Base Pay (PKR)", min_value=0, value=50000)
 percent_change = st.sidebar.number_input("Increase/Decrease in %", value=0)
 adjusted_base = base_pay * (1 + percent_change / 100)
 
+# Allowances Inputs
 transport = st.sidebar.number_input("Transportation Allowance", value=8000)
 shift = st.sidebar.number_input("Shift Allowance", value=0)
 entertainment = st.sidebar.number_input("Entertainment Allowance", value=0)
@@ -29,14 +33,21 @@ laundry = st.sidebar.number_input("Laundry Allowance", value=0)
 sales = st.sidebar.number_input("Sales Allowance", value=0)
 technical = st.sidebar.number_input("Technical Allowance", value=0)
 
+# COLA & 13th Salary
 cola_percent = st.sidebar.number_input("COLA (%)", value=0.0)
-income_tax = st.sidebar.number_input("Income Tax", value=0)
-
 has_13th_salary = st.sidebar.checkbox("Include 13th Salary?")
+
+# Deductions
+income_tax = st.sidebar.number_input("Income Tax", value=0)
+misc_deduction = st.sidebar.number_input("Miscellaneous Deduction", value=0)
+critical_illness = st.sidebar.number_input("Critical Illness Deduction", value=0)
+
+# CPI
 cpi = st.sidebar.number_input("Consumer Price Index (CPI) %", value=10.0)
 
-# Calculation Function
+# --- Salary Calculation Function ---
 def calculate_components(base):
+    # Allowances
     housing = base * 0.45
     utility = base * 0.10
     cola = base * (cola_percent / 100)
@@ -57,16 +68,24 @@ def calculate_components(base):
     }
 
     gross = sum(allowances.values())
+
+    # Deductions
+    provident_fund = base * 0.10
+    union_contrib = base * 0.01
     deductions = {
-        "Provident Fund (10%)": base * 0.10,
-        "Income Tax": income_tax
+        "Provident Fund (10%)": provident_fund,
+        "Union Contribution (1%)": union_contrib,
+        "Income Tax": income_tax,
+        "Miscellaneous Deduction": misc_deduction,
+        "Critical Illness": critical_illness
     }
+
     total_deductions = sum(deductions.values())
     net_salary = gross - total_deductions
 
     return allowances, deductions, gross, total_deductions, net_salary
 
-# Year-wise Calculations
+# --- Salary for Each Year ---
 years = [2025, 2026, 2027]
 salary_data = []
 
@@ -80,29 +99,30 @@ for i, year in enumerate(years):
         "Net Salary": round(net_salary)
     })
 
-# DataFrame
+# --- Results Display ---
 df = pd.DataFrame(salary_data)
 
-# Display Breakdown
-st.subheader("📋 Salary Breakdown")
-with st.expander("Click to view breakdown for 2025"):
+st.subheader("📋 Detailed Breakdown for 2025")
+with st.expander("🔎 View Full Breakdown"):
     allowances, deductions, gross, total_deductions, net = calculate_components(adjusted_base)
-    st.markdown("### Allowances")
+
+    st.markdown("### ✅ Allowances")
     st.table(pd.DataFrame(allowances.items(), columns=["Component", "Amount (PKR)"]))
-    st.markdown("### Deductions")
+
+    st.markdown("### ❌ Deductions")
     st.table(pd.DataFrame(deductions.items(), columns=["Component", "Amount (PKR)"]))
 
-    st.markdown(f"✅ **Gross Pay:** PKR {round(gross):,.0f}")
-    st.markdown(f"🧾 **Total Deductions:** PKR {round(total_deductions):,.0f}")
+    st.markdown(f"💸 **Gross Pay:** PKR {round(gross):,.0f}")
+    st.markdown(f"💳 **Total Deductions:** PKR {round(total_deductions):,.0f}")
     st.markdown(f"💰 **Net Salary:** PKR {round(net):,.0f}")
 
-# Display Table
-st.subheader("📊 Year-wise Net Salary Summary")
+# --- Salary Table ---
+st.subheader("📊 Net Salary Comparison (2025-2027)")
 st.dataframe(df)
 
-# Chart
+# --- Chart ---
 fig, ax = plt.subplots()
-ax.bar(df["Year"].astype(str), df["Net Salary"], color="green")
-ax.set_title("Net Salary Comparison (2025 - 2027)")
+ax.bar(df["Year"].astype(str), df["Net Salary"], color="#2e8b57")
+ax.set_title("📈 Net Salary Trend")
 ax.set_ylabel("Net Salary (PKR)")
 st.pyplot(fig)
