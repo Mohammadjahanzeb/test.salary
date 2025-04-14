@@ -2,15 +2,13 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Page Configuration
+# Streamlit config
 st.set_page_config(page_title="Salary Comparison App", layout="wide")
 
-# Green and White Theme Styling
+# Green/White Theme
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #f5fff5;
-    }
+    .stApp { background-color: #f5fff5; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -18,22 +16,24 @@ st.markdown("""
 st.title("💼 Salary Comparison App")
 st.markdown("📅 Compare your salary across **2025, 2026, and 2027** with CPI and detailed breakdown.")
 
-# --- Sidebar Inputs ---
-st.sidebar.header("🔧 Salary Input Settings")
+# Sidebar Inputs
+st.sidebar.header("🔧 Salary Inputs")
 
+# Base Pay
 base_pay = st.sidebar.number_input("Base Pay (PKR)", min_value=0, value=50000)
 percent_change = st.sidebar.number_input("Increase/Decrease in %", value=0)
 adjusted_base = base_pay * (1 + percent_change / 100)
 
-# Allowances Inputs
+# Allowances
 transport = st.sidebar.number_input("Transportation Allowance", value=8000)
 shift = st.sidebar.number_input("Shift Allowance", value=0)
 entertainment = st.sidebar.number_input("Entertainment Allowance", value=0)
 laundry = st.sidebar.number_input("Laundry Allowance", value=0)
 sales = st.sidebar.number_input("Sales Allowance", value=0)
 technical = st.sidebar.number_input("Technical Allowance", value=0)
+special_allowance = st.sidebar.number_input("Special Allowance", value=0)
 
-# COLA & 13th Salary
+# COLA and 13th Salary
 cola_percent = st.sidebar.number_input("COLA (%)", value=0.0)
 has_13th_salary = st.sidebar.checkbox("Include 13th Salary?")
 
@@ -45,7 +45,7 @@ critical_illness = st.sidebar.number_input("Critical Illness Deduction", value=0
 # CPI
 cpi = st.sidebar.number_input("Consumer Price Index (CPI) %", value=10.0)
 
-# --- Salary Calculation Function ---
+# Salary Calculation
 def calculate_components(base):
     # Allowances
     housing = base * 0.45
@@ -63,6 +63,7 @@ def calculate_components(base):
         "Laundry": laundry,
         "Sales": sales,
         "Technical": technical,
+        "Special Allowance": special_allowance,
         "COLA": cola,
         "13th Salary": thirteenth
     }
@@ -85,7 +86,7 @@ def calculate_components(base):
 
     return allowances, deductions, gross, total_deductions, net_salary
 
-# --- Salary for Each Year ---
+# Calculate for 3 years
 years = [2025, 2026, 2027]
 salary_data = []
 
@@ -99,11 +100,9 @@ for i, year in enumerate(years):
         "Net Salary": round(net_salary)
     })
 
-# --- Results Display ---
-df = pd.DataFrame(salary_data)
-
+# Display breakdown
 st.subheader("📋 Detailed Breakdown for 2025")
-with st.expander("🔎 View Full Breakdown"):
+with st.expander("🔎 Click to Expand Breakdown"):
     allowances, deductions, gross, total_deductions, net = calculate_components(adjusted_base)
 
     st.markdown("### ✅ Allowances")
@@ -116,13 +115,14 @@ with st.expander("🔎 View Full Breakdown"):
     st.markdown(f"💳 **Total Deductions:** PKR {round(total_deductions):,.0f}")
     st.markdown(f"💰 **Net Salary:** PKR {round(net):,.0f}")
 
-# --- Salary Table ---
-st.subheader("📊 Net Salary Comparison (2025-2027)")
+# Display DataFrame
+st.subheader("📊 Year-wise Net Salary Summary")
+df = pd.DataFrame(salary_data)
 st.dataframe(df)
 
-# --- Chart ---
+# Chart
 fig, ax = plt.subplots()
 ax.bar(df["Year"].astype(str), df["Net Salary"], color="#2e8b57")
-ax.set_title("📈 Net Salary Trend")
+ax.set_title("📈 Net Salary Trend (2025 - 2027)")
 ax.set_ylabel("Net Salary (PKR)")
 st.pyplot(fig)
